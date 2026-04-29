@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renko ATR/2 Swing System — NSE/BSE</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#060810;
+  --deep:#0c1120;
+  --panel:#111827;
+  --panel2:#1a2235;
+  --edge:#1e2d45;
+  --edge2:#253350;
+  --gold:#f5a623;
+  --gold2:#fbbf24;
+  --jade:#10b981;
+  --jade2:#34d399;
+  --ruby:#ef4444;
+  --ruby2:#f87171;
+  --sky:#38bdf8;
+  --ink:#e2e8f0;
+  --ink2:#94a3b8;
+  --ink3:#64748b;
+  --font:'Space Grotesk',sans-serif;
+  --mono:'Fira Code',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--void);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.6;min-height:100vh;overflow-x:hidden;}
+
+/* HEADER */
+.site-header{
+  background:linear-gradient(180deg,rgba(6,8,16,0.98) 0%,rgba(12,17,32,0.95) 100%);
+  border-bottom:1px solid var(--edge2);
+  padding:0;
+  position:sticky;top:0;z-index:200;
+  backdrop-filter:blur(12px);
+}
+.header-top{
+  display:flex;align-items:center;gap:0;
+  border-bottom:1px solid var(--edge);
+}
+.logo-zone{
+  padding:16px 28px;
+  border-right:1px solid var(--edge);
+  flex-shrink:0;
+}
+.logo-eye{
+  font-family:var(--mono);font-size:9px;letter-spacing:4px;
+  text-transform:uppercase;color:var(--gold);margin-bottom:4px;
+}
+.logo-name{
+  font-size:20px;font-weight:700;letter-spacing:-0.5px;
+  background:linear-gradient(135deg,var(--gold) 0%,var(--gold2) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  line-height:1.1;
+}
+.stat-strip{display:flex;flex:1;overflow-x:auto;}
+.hstat{
+  padding:12px 22px;border-right:1px solid var(--edge);
+  flex-shrink:0;display:flex;flex-direction:column;justify-content:center;
+}
+.hstat-l{font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--ink3);margin-bottom:2px;}
+.hstat-v{font-size:15px;font-weight:700;}
+.hstat-v.g{color:var(--jade);}
+.hstat-v.r{color:var(--ruby);}
+.hstat-v.o{color:var(--gold);}
+.hstat-v.b{color:var(--sky);}
+
+/* NAV */
+.site-nav{display:flex;padding:0 28px;overflow-x:auto;gap:0;}
+.tab-btn{
+  padding:10px 20px;cursor:pointer;
+  font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--ink3);border-bottom:2px solid transparent;
+  transition:all .2s;white-space:nowrap;user-select:none;
+  background:none;border-top:none;border-left:none;border-right:none;
+}
+.tab-btn:hover{color:var(--ink);}
+.tab-btn.on{color:var(--gold);border-bottom-color:var(--gold);}
+
+/* PAGES */
+.pg{display:none;padding:36px 28px;max-width:1440px;margin:0 auto;}
+.pg.on{display:block;animation:pgIn .3s ease;}
+@keyframes pgIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+
+/* PAGE HEADER */
+.pg-eye{font-family:var(--mono);font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+.pg-title{font-size:32px;font-weight:700;letter-spacing:-1px;line-height:1;margin-bottom:8px;}
+.pg-sub{font-size:13px;color:var(--ink2);border-left:3px solid var(--gold);padding-left:12px;margin-bottom:32px;}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.mb20{margin-bottom:20px;}
+.mb32{margin-bottom:32px;}
+.span2{grid-column:span 2;}
+
+/* KPI BAR */
+.kpi-bar{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  border:1px solid var(--edge);border-radius:6px;overflow:hidden;
+  margin-bottom:32px;
+}
+.kpi{
+  padding:18px 22px;border-right:1px solid var(--edge);
+  background:var(--panel);position:relative;overflow:hidden;
+}
+.kpi:last-child{border-right:none;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi.g::before{background:var(--jade);}
+.kpi.r::before{background:var(--ruby);}
+.kpi.o::before{background:var(--gold);}
+.kpi.b::before{background:var(--sky);}
+.kpi-label{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--ink3);margin-bottom:6px;}
+.kpi-val{font-size:26px;font-weight:700;line-height:1;}
+.kpi.g .kpi-val{color:var(--jade);}
+.kpi.r .kpi-val{color:var(--ruby);}
+.kpi.o .kpi-val{color:var(--gold);}
+.kpi.b .kpi-val{color:var(--sky);}
+.kpi-note{font-size:11px;color:var(--ink3);margin-top:3px;}
+
+/* CARDS */
+.card{
+  background:var(--panel);border:1px solid var(--edge);
+  border-radius:8px;padding:22px;position:relative;overflow:hidden;
+}
+.card-top-bar{position:absolute;top:0;left:0;right:0;height:3px;}
+.card-top-bar.g{background:linear-gradient(90deg,var(--jade),var(--jade2));}
+.card-top-bar.o{background:linear-gradient(90deg,var(--gold),var(--gold2));}
+.card-top-bar.r{background:linear-gradient(90deg,var(--ruby),var(--ruby2));}
+.card-top-bar.b{background:linear-gradient(90deg,var(--sky),#7dd3fc);}
+.card-label{
+  font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:8px;
+}
+.card-label::before{content:'';width:14px;height:2px;background:var(--gold);display:inline-block;flex-shrink:0;}
+
+/* CODE BLOCK */
+.code-block{
+  background:var(--void);border:1px solid var(--edge);border-left:3px solid var(--gold);
+  border-radius:4px;padding:18px 20px;
+  font-family:var(--mono);font-size:12px;line-height:2;
+  margin:14px 0;color:var(--gold2);
+}
+.code-block .dim{color:var(--ink3);font-size:11px;}
+.code-block .g{color:var(--jade);}
+.code-block .r{color:var(--ruby);}
+.code-block .b{color:var(--sky);}
+
+/* ALERT BOXES */
+.alert{padding:12px 16px;border-radius:4px;font-size:12px;margin:12px 0;display:flex;gap:10px;align-items:flex-start;}
+.alert strong{font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:3px;}
+.alert.g{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);color:#6ee7b7;}
+.alert.g strong{color:var(--jade2);}
+.alert.o{background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.2);color:#fcd34d;}
+.alert.o strong{color:var(--gold2);}
+.alert.r{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:var(--ruby2);}
+.alert.r strong{color:var(--ruby);}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{
+  font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--ink3);text-align:left;padding:10px 14px;
+  border-bottom:2px solid var(--edge2);background:var(--deep);
+}
+.tbl td{padding:11px 14px;border-bottom:1px solid var(--edge);font-size:12px;vertical-align:top;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(255,255,255,.02);}
+
+/* TAG */
+.tag{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:3px;}
+.tag.g{background:rgba(16,185,129,.12);color:var(--jade);border:1px solid rgba(16,185,129,.25);}
+.tag.r{background:rgba(239,68,68,.12);color:var(--ruby);border:1px solid rgba(239,68,68,.25);}
+.tag.o{background:rgba(245,166,35,.12);color:var(--gold);border:1px solid rgba(245,166,35,.25);}
+.tag.b{background:rgba(56,189,248,.12);color:var(--sky);border:1px solid rgba(56,189,248,.25);}
+
+/* RENKO VISUAL */
+.renko-vis{
+  background:var(--void);border:1px solid var(--edge);border-radius:6px;
+  padding:24px 20px 28px;display:flex;align-items:flex-end;gap:4px;
+  min-height:160px;position:relative;overflow:hidden;
+}
+.renko-vis::after{
+  content:'';position:absolute;top:0;left:0;right:0;
+  height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+.rk{border-radius:2px;position:relative;flex-shrink:0;}
+.rk.u{background:linear-gradient(180deg,var(--jade2),var(--jade));border:1px solid rgba(52,211,153,.3);}
+.rk.d{background:linear-gradient(180deg,var(--ruby2),var(--ruby));border:1px solid rgba(248,113,113,.3);}
+.rk.n{background:var(--edge);border:1px solid var(--edge2);}
+.rk-lab{
+  position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:7px;color:var(--ink3);white-space:nowrap;
+}
+
+/* INPUT */
+.igroup{margin-bottom:14px;}
+.igroup label{display:block;font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;}
+.igroup input,.igroup select{
+  width:100%;background:var(--deep);border:1px solid var(--edge2);border-radius:4px;
+  padding:9px 12px;color:var(--ink);
+  font-family:var(--mono);font-size:13px;outline:none;transition:border-color .2s;
+}
+.igroup input:focus,.igroup select:focus{border-color:var(--gold);}
+.igroup input[readonly]{background:var(--void);color:var(--ink2);}
+
+/* RESULT PANEL */
+.res-panel{background:var(--void);border:1px solid var(--edge);border-radius:6px;padding:18px 20px;margin-top:14px;}
+.res-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--edge);}
+.res-row:last-child{border-bottom:none;}
+.res-l{font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);}
+.res-v{font-family:var(--mono);font-size:15px;font-weight:600;}
+
+/* JOURNAL */
+.jq{
+  background:var(--panel);border:1px solid var(--edge);
+  border-left:4px solid var(--edge2);border-radius:6px;
+  padding:16px 18px;margin-bottom:12px;
+  display:flex;gap:14px;align-items:flex-start;
+  transition:border-left-color .2s;
+}
+.jq:hover{border-left-color:var(--gold);}
+.jq.sys{border-left-color:var(--jade);}
+.jq.psy{border-left-color:var(--ruby);}
+.jn{
+  font-size:36px;font-weight:700;color:var(--edge2);line-height:1;
+  min-width:44px;font-family:var(--mono);
+}
+.jb{flex:1;}
+.jt{font-weight:600;font-size:13px;color:var(--ink);margin-bottom:5px;}
+.jw{font-size:11px;color:var(--ink2);line-height:1.6;}
+.jtag{margin-left:auto;align-self:flex-start;margin-top:2px;}
+
+/* TIMELINE */
+.tl{position:relative;padding-left:26px;}
+.tl::before{content:'';position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--edge2);}
+.tl-item{position:relative;margin-bottom:18px;}
+.tl-dot{position:absolute;left:-22px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--gold);border:2px solid var(--void);}
+.tl-t{font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase;}
+.tl-h{font-weight:600;font-size:13px;margin-bottom:4px;}
+.tl-b{font-size:12px;color:var(--ink2);line-height:1.5;}
+
+/* SCREENER */
+.scr-head,.scr-row{
+  display:grid;
+  grid-template-columns:160px 80px 80px 120px 130px 70px 1fr;
+  gap:8px;padding:10px 14px;
+}
+.scr-head{
+  font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--ink3);border-bottom:2px solid var(--edge2);background:var(--deep);
+  border-radius:6px 6px 0 0;
+}
+.scr-row{border-bottom:1px solid var(--edge);font-size:12px;transition:background .15s;}
+.scr-row:hover{background:rgba(255,255,255,.025);}
+.scr-row:last-child{border-bottom:none;}
+
+/* W-PATTERN CARDS */
+.wp-card{
+  background:var(--panel);border:1px solid var(--edge);border-radius:8px;
+  padding:14px 16px;margin-bottom:10px;
+  display:flex;gap:14px;align-items:center;
+  transition:border-color .2s;cursor:default;
+}
+.wp-card:hover{border-color:var(--gold);}
+.wp-mini{
+  width:76px;height:44px;flex-shrink:0;
+  display:flex;align-items:flex-end;gap:2px;
+  background:var(--void);border-radius:4px;padding:5px 4px;
+}
+.wm-b{flex:1;border-radius:1px;min-width:5px;}
+.wp-info{flex:1;}
+.wp-name{font-weight:700;font-size:13px;}
+.wp-meta{font-family:var(--mono);font-size:10px;color:var(--ink3);margin-top:2px;}
+.wp-status{font-size:11px;color:var(--ink2);margin-top:4px;}
+.wp-sc{text-align:right;flex-shrink:0;}
+.wp-sc-v{font-size:24px;font-weight:700;line-height:1;font-family:var(--mono);}
+.wp-sc-l{font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);}
+
+/* FILTER BAR */
+.fbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.fbtn{
+  padding:5px 12px;border:1px solid var(--edge2);border-radius:3px;
+  font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  cursor:pointer;background:var(--panel);color:var(--ink3);
+  transition:all .15s;
+}
+.fbtn:hover,.fbtn.on{background:var(--gold);color:var(--void);border-color:var(--gold);}
+.fsearch{
+  padding:5px 12px;border:1px solid var(--edge2);border-radius:3px;
+  font-family:var(--mono);font-size:11px;background:var(--panel);color:var(--ink);
+  outline:none;flex:1;max-width:200px;transition:border-color .2s;
+}
+.fsearch:focus{border-color:var(--gold);}
+
+/* COMPARE BOXES */
+.cmp-box{background:var(--deep);border:1px solid var(--edge);border-radius:6px;overflow:hidden;}
+.cmp-head{padding:10px 14px;font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;}
+.cmp-body{padding:14px;font-size:12px;color:var(--ink2);line-height:1.7;}
+.cmp-body ul{margin-left:14px;}
+.cmp-body li{margin-bottom:3px;}
+.cmp-box.g .cmp-head{background:rgba(16,185,129,.1);color:var(--jade);}
+.cmp-box.r .cmp-head{background:rgba(239,68,68,.08);color:var(--ruby);}
+
+/* RISK ROWS */
+.rr{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--edge);}
+.rr:last-child{border-bottom:none;}
+.rr-l{font-size:12px;color:var(--ink2);}
+.rr-v{font-family:var(--mono);font-weight:600;font-size:13px;}
+
+/* VERDICT */
+.verdict{margin-top:12px;padding:10px 14px;border-radius:4px;font-family:var(--mono);font-size:11px;letter-spacing:.5px;display:none;}
+
+/* CORR RULES */
+.cr{padding:10px 14px;border-left:3px solid var(--gold);background:var(--deep);border-radius:0 4px 4px 0;margin-bottom:8px;}
+.cr strong{display:block;font-size:12px;color:var(--ink);margin-bottom:2px;}
+.cr span{font-size:11px;color:var(--ink2);}
+.cr.j{border-left-color:var(--jade);}
+.cr.r{border-left-color:var(--ruby);}
+.cr.o{border-left-color:var(--gold);}
+.cr.b{border-left-color:var(--sky);}
+
+/* VSA ROWS */
+.vr{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--edge);}
+.vr:last-child{border-bottom:none;}
+.vr-name{font-weight:600;font-size:12px;min-width:130px;}
+.vr-vol{font-family:var(--mono);font-size:10px;min-width:90px;}
+.vr-desc{font-size:11px;color:var(--ink2);flex:1;}
+.vr-act{font-size:11px;font-weight:700;min-width:90px;}
+
+/* NR RULE BOXES */
+.nr-item{padding:12px 0;border-bottom:1px solid var(--edge);display:flex;gap:12px;align-items:flex-start;}
+.nr-item:last-child{border-bottom:none;}
+.nr-num{font-family:var(--mono);font-size:11px;color:var(--ruby);font-weight:600;min-width:22px;}
+.nr-body strong{font-size:13px;display:block;margin-bottom:3px;}
+.nr-body p{font-size:11px;color:var(--ink2);}
+
+@media(max-width:860px){
+  .g2,.g3,.g4,.kpi-bar{grid-template-columns:1fr;}
+  .span2{grid-column:span 1;}
+  .scr-head,.scr-row{grid-template-columns:1fr 1fr 1fr;}
+  .logo-zone{padding:12px 16px;}
+  .pg{padding:20px 14px;}
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-top">
+    <div class="logo-zone">
+      <div class="logo-eye">NSE · BSE · EOD System</div>
+      <div class="logo-name">RENKO ATR/2<br>SWING SYSTEM</div>
+    </div>
+    <div class="stat-strip">
+      <div class="hstat"><div class="hstat-l">Capital</div><div class="hstat-v o">₹2,00,000</div></div>
+      <div class="hstat"><div class="hstat-l">Max Risk/Trade</div><div class="hstat-v r">₹2,000</div></div>
+      <div class="hstat"><div class="hstat-l">Brick Size</div><div class="hstat-v o">ATR(14) ÷ 2</div></div>
+      <div class="hstat"><div class="hstat-l">Price Source</div><div class="hstat-v g">CLOSE</div></div>
+      <div class="hstat"><div class="hstat-l">SL Rule</div><div class="hstat-v b">2 Bricks</div></div>
+      <div class="hstat"><div class="hstat-l">Setup Focus</div><div class="hstat-v o">LL-HL</div></div>
+    </div>
+  </div>
+  <nav class="site-nav">
+    <button class="tab-btn on" onclick="showPg('mechanics',this)">01 Renko Mechanics</button>
+    <button class="tab-btn" onclick="showPg('patterns',this)">02 LL-HL Patterns</button>
+    <button class="tab-btn" onclick="showPg('screener',this)">03 Stock Screener</button>
+    <button class="tab-btn" onclick="showPg('risk',this)">04 Risk Engine</button>
+    <button class="tab-btn" onclick="showPg('journal',this)">05 Audit Journal</button>
+    <button class="tab-btn" onclick="showPg('workflow',this)">06 EOD Routine</button>
+  </nav>
+</header>
+
+<!-- ═══════ PAGE 1: MECHANICS ═══════ -->
+<div id="mechanics" class="pg on">
+  <div class="pg-eye">Section 01 — Charting Architecture</div>
+  <div class="pg-title">Renko ATR/2 Mechanics</div>
+  <div class="pg-sub">Dynamic brick sizing · Close-price source · Why it fits the 9-to-5 trader exactly</div>
+
+  <div class="kpi-bar">
+    <div class="kpi o"><div class="kpi-label">Brick Size</div><div class="kpi-val">ATR÷2</div><div class="kpi-note">Recalculates weekly</div></div>
+    <div class="kpi g"><div class="kpi-label">Price Source</div><div class="kpi-val">CLOSE</div><div class="kpi-note">No intraday noise</div></div>
+    <div class="kpi b"><div class="kpi-label">Base Timeframe</div><div class="kpi-val">Daily</div><div class="kpi-note">EOD chart check only</div></div>
+    <div class="kpi r"><div class="kpi-label">SL Distance</div><div class="kpi-val">2 Bricks</div><div class="kpi-note">= 1 full ATR</div></div>
+  </div>
+
+  <div class="g2 mb32">
+    <div class="card">
+      <div class="card-top-bar o"></div>
+      <div class="card-label">ATR/2 Brick Size Formula</div>
+      <div class="code-block">
+        <span class="b">Step 1:</span> True Range (TR) = MAX(<br>
+        &nbsp;&nbsp;High − Low,<br>
+        &nbsp;&nbsp;|High − Prev Close|,<br>
+        &nbsp;&nbsp;|Low − Prev Close|<br>
+        )<br><br>
+        <span class="b">Step 2:</span> ATR(14) = 14-period EMA of TR<br><br>
+        <span class="g">Step 3: Brick Size = ATR(14) ÷ 2</span><br>
+        <span class="dim">// The ÷2 is critical — halves ATR to catch</span><br>
+        <span class="dim">// early trend signals without excess noise</span><br><br>
+        <span class="g">New UP brick</span> when Close ≥ last top + Brick<br>
+        <span class="r">New DOWN brick</span> when Close ≤ last bottom − Brick<br>
+        <span class="dim">// No brick if Close is between the thresholds</span>
+      </div>
+      <div class="alert o">
+        <div><strong>Why ATR/2 and not ATR or a fixed number?</strong>ATR alone = too few bricks, misses early entries. Fixed ₹5 = wrong scale for HDFC at ₹1,600 and wrong for ITC at ₹420. ATR/2 auto-scales to every stock's volatility — one formula governs the entire Nifty 50 universe.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top-bar g"></div>
+      <div class="card-label">Close Price vs High/Low Source</div>
+      <table class="tbl" style="margin-bottom:14px;">
+        <tr><th>Source</th><th>Brick Formation</th><th>Signal Quality</th><th>Verdict</th></tr>
+        <tr>
+          <td><strong>Close</strong></td>
+          <td>End-of-day committed price</td>
+          <td style="color:var(--jade)">Fewer, higher quality</td>
+          <td><span class="tag g">USE THIS</span></td>
+        </tr>
+        <tr>
+          <td>High/Low</td>
+          <td>Intraday extremes</td>
+          <td style="color:var(--ruby)">More signals, more false ones</td>
+          <td><span class="tag r">Avoid for EOD</span></td>
+        </tr>
+      </table>
+      <div class="alert g">
+        <div><strong>Indian Market Specific Reason</strong>NSE intraday high/low data is frequently distorted by algo-driven spike wicks during the opening 15 minutes and pre-close auction. Close price = institutional consensus. For your 3:20 PM check, Close-based Renko is the only reliable source.</div>
+      </div>
+
+      <div class="card-label" style="margin-top:16px;">Live ATR Brick Calculator</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="igroup"><label>ATR(14) Value ₹</label><input type="number" id="a-atr" placeholder="e.g. 48" value="48" oninput="calcAtr()"></div>
+        <div class="igroup"><label>Entry Price ₹</label><input type="number" id="a-entry" placeholder="e.g. 1620" value="1620" oninput="calcAtr()"></div>
+      </div>
+      <div id="a-out" class="res-panel">
+        <div class="res-row"><span class="res-l">Brick Size (ATR÷2)</span><span class="res-v" style="color:var(--gold)" id="a-brick">₹24.00</span></div>
+        <div class="res-row"><span class="res-l">2-Brick SL Distance</span><span class="res-v" style="color:var(--ruby)" id="a-sl">₹48.00</span></div>
+        <div class="res-row"><span class="res-l">Max Qty (1% risk rule)</span><span class="res-v" style="color:var(--jade)" id="a-qty">41 shares</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb32">
+    <div class="card-top-bar b"></div>
+    <div class="card-label">Renko Brick Series — Visual Guide (ATR/2 Daily, Close-based)</div>
+    <div class="renko-vis" style="height:180px;padding:40px 20px 36px;flex-wrap:nowrap;">
+      <div class="rk n" style="width:22px;height:44px;"><div class="rk-lab">Consol</div></div>
+      <div class="rk n" style="width:22px;height:44px;"></div>
+      <div class="rk n" style="width:22px;height:44px;"></div>
+      <div class="rk d" style="width:22px;height:44px;opacity:.5;"></div>
+      <div class="rk d" style="width:22px;height:44px;opacity:.5;"><div class="rk-lab">LL zone</div></div>
+      <div class="rk d" style="width:22px;height:44px;opacity:.4;"></div>
+      <div class="rk u" style="width:22px;height:44px;border:2px solid rgba(52,211,153,.6);"><div class="rk-lab" style="color:var(--gold)">1st UP</div></div>
+      <div class="rk u" style="width:22px;height:44px;border:2px solid rgba(52,211,153,.9);"><div class="rk-lab" style="color:var(--gold)">ENTRY</div></div>
+      <div class="rk u" style="width:22px;height:44px;"></div>
+      <div class="rk u" style="width:22px;height:44px;"></div>
+      <div class="rk d" style="width:22px;height:44px;opacity:.6;"><div class="rk-lab" style="color:var(--gold)">HL</div></div>
+      <div class="rk u" style="width:22px;height:44px;"><div class="rk-lab" style="color:var(--jade)">Resume</div></div>
+      <div class="rk u" style="width:22px;height:44px;"></div>
+      <div class="rk u" style="width:22px;height:44px;"></div>
+      <div class="rk u" style="width:22px;height:44px;"></div>
+      <div class="rk d" style="width:22px;height:44px;border:2px solid rgba(239,68,68,.7);"><div class="rk-lab" style="color:var(--ruby)">1st DN</div></div>
+      <div class="rk d" style="width:22px;height:44px;border:2px solid rgba(239,68,68,.9);"><div class="rk-lab" style="color:var(--ruby)">EXIT</div></div>
+    </div>
+    <div style="display:flex;gap:20px;padding:10px 4px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:14px;background:linear-gradient(180deg,var(--jade2),var(--jade));border-radius:2px;"></div><span style="font-family:var(--mono);font-size:10px;color:var(--ink2);">UP Brick (bullish close)</span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:14px;background:linear-gradient(180deg,var(--ruby2),var(--ruby));border-radius:2px;"></div><span style="font-family:var(--mono);font-size:10px;color:var(--ink2);">DOWN Brick (bearish close)</span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:14px;background:var(--edge);border-radius:2px;border:1px solid var(--edge2);"></div><span style="font-family:var(--mono);font-size:10px;color:var(--ink2);">No brick (within ATR/2 range)</span></div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="card-top-bar g"></div>
+      <div class="card-label">Dynamic vs Fixed Brick Size</div>
+      <div class="g2" style="gap:12px;">
+        <div class="cmp-box g">
+          <div class="cmp-head">✓ ATR/2 — Dynamic</div>
+          <div class="cmp-body"><ul>
+            <li>VIX spike → larger bricks → fewer whipsaws</li>
+            <li>Low volatility → smaller bricks → early entries</li>
+            <li>Self-calibrates — no manual tuning</li>
+            <li>Same formula: ₹200 or ₹4,000 stocks</li>
+            <li>Recalculate every Monday before market open</li>
+          </ul></div>
+        </div>
+        <div class="cmp-box r">
+          <div class="cmp-head">✗ Fixed Points (e.g. ₹5)</div>
+          <div class="cmp-body"><ul>
+            <li>₹5 = pure noise for HDFC Bank at ₹1,620</li>
+            <li>₹5 = too large for smaller Nifty stocks</li>
+            <li>Over-signals in low vol, misses in high vol</li>
+            <li>Requires manual recalibration every month</li>
+            <li>No statistical edge — arbitrary number</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top-bar o"></div>
+      <div class="card-label">Why Renko Removes Your Biggest Problem</div>
+      <table class="tbl">
+        <tr><th>Your 9-to-5 Problem</th><th>Renko ATR/2 Solution</th></tr>
+        <tr><td>Can't watch candles mid-day</td><td>Bricks only form at EOD close — nothing changes while you're in office</td></tr>
+        <tr><td>Panic from intraday wicks</td><td>Renko removes time and wicks — only committed price moves build bricks</td></tr>
+        <tr><td>Unclear stop placement</td><td>SL = exactly 2 bricks — mathematical, never subjective</td></tr>
+        <tr><td>Overtrading sideways markets</td><td>Consolidation = no new bricks = forced discipline, no signals</td></tr>
+        <tr><td>Different stocks, different params</td><td>ATR/2 auto-scales every stock — one formula, whole Nifty 50</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PAGE 2: LL-HL PATTERNS ═══════ -->
+<div id="patterns" class="pg">
+  <div class="pg-eye">Section 02 — High-Probability Setups</div>
+  <div class="pg-title">LL-HL Pattern System + VSA</div>
+  <div class="pg-sub">Lower Low → Higher Low reversal structure · W-Pattern / Double Bottom · VSA volume confirmation</div>
+
+  <div class="card mb20">
+    <div class="card-top-bar o"></div>
+    <div class="card-label">The LL-HL Structure — Core Concept</div>
+    <div class="g2">
+      <div>
+        <div class="code-block">
+<span class="b">LL-HL Brick Sequence (Bullish Reversal):</span><br><br>
+Phase 1: <span class="r">Lower Low (LL)</span><br>
+  — Price makes a new multi-week brick low<br>
+  — Multiple consecutive DOWN bricks<br><br>
+Phase 2: <span class="g">Initial Rally</span><br>
+  — 2+ UP bricks form → selling pressure weakens<br><br>
+Phase 3: <span class="r">Retest (Higher Low = HL)</span><br>
+  — Down bricks return BUT stop <span class="g">above the LL</span><br>
+  — HL > LL = structural shift in progress<br><br>
+Phase 4: <span class="g">Breakout Confirmation</span><br>
+  — 2 consecutive UP bricks above HL = <span class="g">ENTRY</span><br>
+  — Volume spike on candlestick chart = VSA confirm<br><br>
+<span class="dim">// W-Pattern = visual name for LL-HL-LL-HL-HH</span>
+        </div>
+      </div>
+      <div>
+        <div class="card-label">LL-HL Renko Visualization</div>
+        <div class="renko-vis" style="height:200px;padding:40px 14px 36px;gap:3px;">
+          <!-- Phase 1: LL -->
+          <div class="rk d" style="width:20px;height:44px;opacity:.5;"><div class="rk-lab" style="color:var(--ruby)">LL start</div></div>
+          <div class="rk d" style="width:20px;height:44px;opacity:.5;"></div>
+          <div class="rk d" style="width:20px;height:44px;opacity:.4;"><div class="rk-lab" style="color:var(--ruby)">LL low</div></div>
+          <!-- Phase 2: rally -->
+          <div class="rk u" style="width:20px;height:44px;opacity:.7;"></div>
+          <div class="rk u" style="width:20px;height:44px;opacity:.7;"><div class="rk-lab" style="color:var(--sky)">Rally</div></div>
+          <!-- Phase 3: HL retest -->
+          <div class="rk d" style="width:20px;height:44px;opacity:.6;"></div>
+          <div class="rk d" style="width:20px;height:44px;border:2px solid rgba(245,166,35,.6);"><div class="rk-lab" style="color:var(--gold)">HL holds</div></div>
+          <!-- Phase 4: entry -->
+          <div class="rk u" style="width:20px;height:44px;border:2px solid rgba(52,211,153,.6);"><div class="rk-lab" style="color:var(--gold)">1st UP</div></div>
+          <div class="rk u" style="width:20px;height:44px;border:2px solid rgba(52,211,153,.9);"><div class="rk-lab" style="color:var(--jade)">ENTRY ✓</div></div>
+          <!-- trend -->
+          <div class="rk u" style="width:20px;height:44px;"></div>
+          <div class="rk u" style="width:20px;height:44px;"></div>
+          <div class="rk u" style="width:20px;height:44px;"></div>
+          <div class="rk u" style="width:20px;height:44px;"><div class="rk-lab" style="color:var(--jade)">Trail SL</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g3 mb20">
+    <div class="card">
+      <div class="card-top-bar g"></div>
+      <div class="card-label">Setup 1 — W-Pattern / Double Bottom</div>
+      <div class="renko-vis" style="height:110px;padding:28px 10px 24px;gap:3px;justify-content:center;">
+        <div class="rk d" style="width:18px;height:40px;opacity:.4;"></div>
+        <div class="rk d" style="width:18px;height:40px;opacity:.4;"><div class="rk-lab" style="color:var(--ruby)">LL</div></div>
+        <div class="rk u" style="width:18px;height:40px;opacity:.6;"></div>
+        <div class="rk u" style="width:18px;height:40px;opacity:.6;"></div>
+        <div class="rk d" style="width:18px;height:40px;opacity:.5;"></div>
+        <div class="rk d" style="width:18px;height:40px;border:1px solid rgba(245,166,35,.5);"><div class="rk-lab" style="color:var(--gold)">HL</div></div>
+        <div class="rk u" style="width:18px;height:40px;border:1px solid rgba(52,211,153,.6);"></div>
+        <div class="rk u" style="width:18px;height:40px;border:2px solid rgba(52,211,153,.9);"><div class="rk-lab" style="color:var(--jade)">IN</div></div>
+        <div class="rk u" style="width:18px;height:40px;"></div>
+      </div>
+      <table class="tbl" style="font-size:11px;margin-top:10px;">
+        <tr><td><strong>Entry trigger</strong></td><td>2nd UP brick after HL holds</td></tr>
+        <tr><td><strong>Stop loss</strong></td><td>2 bricks below HL (never below LL)</td></tr>
+        <tr><td><strong>Target 1</strong></td><td>Height of W pattern projected above neckline</td></tr>
+        <tr><td><strong>VSA confirm</strong></td><td>Volume ≥ 1.5× 20D avg on entry brick day</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-top-bar o"></div>
+      <div class="card-label">Setup 2 — Trend Continuation Pullback</div>
+      <div class="renko-vis" style="height:110px;padding:28px 10px 24px;gap:3px;justify-content:center;">
+        <div class="rk u" style="width:18px;height:40px;opacity:.4;"></div>
+        <div class="rk u" style="width:18px;height:40px;opacity:.4;"></div>
+        <div class="rk u" style="width:18px;height:40px;opacity:.4;"></div>
+        <div class="rk d" style="width:18px;height:40px;opacity:.6;"><div class="rk-lab" style="color:var(--gold)">HL</div></div>
+        <div class="rk d" style="width:18px;height:40px;opacity:.5;border:1px solid rgba(245,166,35,.4);"></div>
+        <div class="rk u" style="width:18px;height:40px;border:2px solid rgba(52,211,153,.9);"><div class="rk-lab" style="color:var(--jade)">IN</div></div>
+        <div class="rk u" style="width:18px;height:40px;"></div>
+        <div class="rk u" style="width:18px;height:40px;"></div>
+      </div>
+      <table class="tbl" style="font-size:11px;margin-top:10px;">
+        <tr><td><strong>Entry trigger</strong></td><td>1st UP brick resuming after 1-2 brick pullback</td></tr>
+        <tr><td><strong>Stop loss</strong></td><td>2 bricks below pullback low</td></tr>
+        <tr><td><strong>Key condition</strong></td><td>Pullback must NOT exceed 3 bricks — else trend broken</td></tr>
+        <tr><td><strong>VSA confirm</strong></td><td>Pullback on LOW volume (No Supply pattern)</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-top-bar r"></div>
+      <div class="card-label">Setup 3 — S/R Flip Breakout</div>
+      <div class="renko-vis" style="height:110px;padding:28px 10px 24px;gap:3px;justify-content:center;position:relative;">
+        <div style="position:absolute;top:40px;left:10px;right:10px;border-top:1px dashed rgba(245,166,35,.4);"></div>
+        <div class="rk u" style="width:18px;height:38px;opacity:.3;"></div>
+        <div class="rk d" style="width:18px;height:38px;opacity:.3;"></div>
+        <div class="rk u" style="width:18px;height:38px;opacity:.3;"></div>
+        <div class="rk d" style="width:18px;height:38px;opacity:.3;"></div>
+        <div class="rk u" style="width:18px;height:42px;border:1px solid rgba(245,166,35,.5);"><div class="rk-lab" style="color:var(--gold)">Break</div></div>
+        <div class="rk u" style="width:18px;height:46px;border:2px solid rgba(52,211,153,.9);"><div class="rk-lab" style="color:var(--jade)">IN</div></div>
+        <div class="rk u" style="width:18px;height:46px;"></div>
+        <div class="rk u" style="width:18px;height:46px;"></div>
+      </div>
+      <table class="tbl" style="font-size:11px;margin-top:10px;">
+        <tr><td><strong>Entry trigger</strong></td><td>Breakout brick OR pullback to flipped support</td></tr>
+        <tr><td><strong>Stop loss</strong></td><td>2 bricks below the flipped support level</td></tr>
+        <tr><td><strong>Confirm</strong></td><td>3+ bricks at same level = strong S/R zone</td></tr>
+        <tr><td><strong>VSA confirm</strong></td><td>High volume (≥2×) on breakout brick</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- VSA -->
+  <div class="card mb20">
+    <div class="card-top-bar b"></div>
+    <div class="card-label">VSA Confirmation — Cross-Reference Candlestick Volume with Renko Signal</div>
+    <p style="font-size:12px;color:var(--ink2);margin-bottom:14px;line-height:1.6;">Renko charts do not display volume. You must cross-reference the underlying candlestick chart (same stock, daily TF) to validate every Renko signal with VSA. Check the candle that corresponds to the brick that triggered your setup.</p>
+    <div class="vr"><div class="vr-name" style="color:var(--jade)">Demand Bar</div><div class="vr-vol" style="color:var(--jade)">Vol ≥ 1.5× avg</div><div class="vr-desc">Wide candle closing near high. Coincides with 1st/2nd UP Renko brick in LL-HL pattern.</div><div class="vr-act" style="color:var(--jade)">✓ Strong BUY</div></div>
+    <div class="vr"><div class="vr-name" style="color:var(--gold)">No Supply</div><div class="vr-vol" style="color:var(--ink3)">Vol &lt; 0.7× avg</div><div class="vr-desc">Narrow down candle, low volume. Confirms HL pullback is harmless — smart money not selling.</div><div class="vr-act" style="color:var(--jade)">✓ HL Valid</div></div>
+    <div class="vr"><div class="vr-name" style="color:var(--ruby)">Supply Bar</div><div class="vr-vol" style="color:var(--ruby)">Vol ≥ 1.5× avg</div><div class="vr-desc">Wide candle closing near low. Coincides with new DOWN bricks — institutions distributing.</div><div class="vr-act" style="color:var(--ruby)">✗ Exit / Skip</div></div>
+    <div class="vr"><div class="vr-name" style="color:var(--ruby)">No Demand</div><div class="vr-vol" style="color:var(--ink3)">Vol &lt; 0.7× avg</div><div class="vr-desc">Narrow UP candle on low volume with Renko UP brick — institutions absent. False signal.</div><div class="vr-act" style="color:var(--ruby)">✗ Skip Trade</div></div>
+    <div class="vr"><div class="vr-name" style="color:var(--sky)">Stopping Vol.</div><div class="vr-vol" style="color:var(--gold)">Vol ≥ 2× avg</div><div class="vr-desc">Extreme volume, narrow spread — selling absorbed. Watch for 2-brick UP reversal next session.</div><div class="vr-act" style="color:var(--gold)">⚠ Alert Mode</div></div>
+    <div class="alert o" style="margin-top:12px;"><strong>Workflow</strong>Zerodha Kite → switch to Candlestick → check volume histogram → compare today's volume to the 20-day average line. VSA check takes under 60 seconds per stock. No VSA confirm = no trade, regardless of Renko signal strength.</div>
+  </div>
+
+  <!-- Nifty Correlation -->
+  <div class="card">
+    <div class="card-top-bar o"></div>
+    <div class="card-label">Nifty 50 Index Correlation Filter — Mandatory Before Any Trade</div>
+    <div class="g2">
+      <div>
+        <div class="cr j"><strong>Nifty Renko = Uptrend (2+ consecutive green bricks)</strong><span>✓ LONG trades ONLY in individual stocks. The index tailwind dramatically increases win probability. Highest confidence zone for LL-HL setups.</span></div>
+        <div class="cr r"><strong>Nifty Renko = Downtrend (2+ consecutive red bricks)</strong><span>✓ SHORT or CASH only. Any LL-HL long setup in a stock is automatically filtered out — index headwind cancels individual setups.</span></div>
+      </div>
+      <div>
+        <div class="cr o"><strong>Nifty Renko = Consolidation (alternating/mixed bricks)</strong><span>⚠ Reduce position size 50%. Only take S/R Flip setups with 2× volume confirmation. Avoid LL-HL entries — too many false starts in sideways markets.</span></div>
+        <div class="cr b"><strong>Bank Nifty Diverging from Nifty 50</strong><span>⚠ Use Bank Nifty Renko trend for banking sector stocks (HDFC Bank, ICICI, Kotak, SBI, Axis). Use Nifty 50 for all other sectors. Divergence = reduce size 50%.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PAGE 3: SCREENER ═══════ -->
+<div id="screener" class="pg">
+  <div class="pg-eye">Section 03 — Stock Scanner</div>
+  <div class="pg-title">LL-HL Pattern Screener</div>
+  <div class="pg-sub">W-Pattern · Double Bottom · Institutional Accumulation · Nifty 50 Universe</div>
+
+  <div class="g2 mb20">
+    <div class="card">
+      <div class="card-top-bar g"></div>
+      <div class="card-label">Institutional Accumulation Scan Logic</div>
+      <div class="code-block">
+<span class="b">ALL 5 conditions must be TRUE:</span><br><br>
+<span class="g">1.</span> Renko Trend = 3+ consecutive UP bricks<br>
+<span class="g">2.</span> 10D avg volume &gt; 20D avg volume <span class="dim">// Rising participation</span><br>
+<span class="g">3.</span> Price above 50-Day SMA (candlestick chart)<br>
+<span class="g">4.</span> Last 3 Renko bricks: zero DOWN bricks in sequence<br>
+<span class="g">5.</span> Nifty 50 Renko Trend = UPTREND<br><br>
+Score 5/5 = <span class="g">High Conviction</span><br>
+Score 4/5 = <span class="b">Watchlist</span><br>
+Score &lt;4 = <span class="dim">Skip this week</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-top-bar o"></div>
+      <div class="card-label">LL-HL / W-Pattern Detection Logic</div>
+      <div class="code-block">
+<span class="b">LL-HL BRICK SEQUENCE CHECK:</span><br><br>
+Step 1: <span class="r">Lower Low</span> — new multi-week brick low exists<br>
+Step 2: 2+ <span class="g">UP bricks</span> form from that low (Phase 2 rally)<br>
+Step 3: Down bricks return but <span class="g">stop ABOVE</span> Step 1 low<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= Higher Low (HL) confirmed<br>
+Step 4: 2 consecutive <span class="g">UP bricks</span> break the neckline<br><br>
+<span class="g">ENTRY:</span> On close of 2nd UP brick (Step 4)<br>
+<span class="r">SL:</span> 2 bricks below the HL (Step 3 low)<br>
+<span class="b">Target:</span> LL-to-neckline height projected above neckline
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb20">
+    <div class="card-top-bar o"></div>
+    <div class="card-label">Live Screener — Nifty 50 Universe</div>
+    <div class="fbar">
+      <button class="fbtn on" onclick="flt('all',this)">All</button>
+      <button class="fbtn" onclick="flt('llhl',this)">LL-HL</button>
+      <button class="fbtn" onclick="flt('accum',this)">Accumulation</button>
+      <button class="fbtn" onclick="flt('brk',this)">Breakout</button>
+      <button class="fbtn" onclick="flt('pull',this)">Pullback</button>
+      <input type="text" class="fsearch" placeholder="Search stock..." oninput="srch(this.value)">
+    </div>
+    <div class="scr-head">
+      <div>Stock</div><div>LTP</div><div>ATR/2</div><div>Pattern</div><div>Renko Trend</div><div>Score</div><div>VSA Status</div>
+    </div>
+    <div id="scr-body"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-top-bar g"></div>
+    <div class="card-label">High-Conviction LL-HL / W-Pattern Candidates (Conviction Score / 7)</div>
+    <p style="font-size:12px;color:var(--ink2);margin-bottom:14px;">Score = number of the 7 confirmation criteria met. 6–7 = confirmed, enter on next 2-brick signal. 4–5 = watchlist. Below 4 = wait for structure to complete.</p>
+    <div id="wp-list"></div>
+    <div class="alert o" style="margin-top:8px;"><strong>How to Interpret the Score</strong>7 criteria: (1) LL confirmed by Renko (2) Rally from LL has 2+ UP bricks (3) HL holds above LL (4) Neckline broken by 2 UP bricks (5) Volume spike on breakout (6) Nifty Renko uptrend (7) 50D SMA support. Score 6-7 = enter. 4-5 = watchlist. Below 4 = too early.</div>
+  </div>
+</div>
+
+<!-- ═══════ PAGE 4: RISK ═══════ -->
+<div id="risk" class="pg">
+  <div class="pg-eye">Section 04 — Position Sizing</div>
+  <div class="pg-title">Risk Management Engine</div>
+  <div class="pg-sub">₹2,000 max risk per trade · 2-brick stop · Live calculator for any Nifty 50 stock</div>
+
+  <div class="kpi-bar">
+    <div class="kpi r"><div class="kpi-label">Max Risk/Trade</div><div class="kpi-val">₹2,000</div><div class="kpi-note">1% of ₹2L capital</div></div>
+    <div class="kpi o"><div class="kpi-label">SL = 2 Bricks</div><div class="kpi-val">= 1 ATR</div><div class="kpi-note">2 × ATR/2</div></div>
+    <div class="kpi b"><div class="kpi-label">Position Cap</div><div class="kpi-val">₹40,000</div><div class="kpi-note">20% of capital max</div></div>
+    <div class="kpi g"><div class="kpi-label">Min R:R</div><div class="kpi-val">1 : 2</div><div class="kpi-note">4 bricks target</div></div>
+  </div>
+
+  <div class="g2 mb32">
+    <div class="card">
+      <div class="card-top-bar o"></div>
+      <div class="card-label">The 1% Rule — Core Formula</div>
+      <div class="code-block">
+<span class="g">Max Risk</span> = ₹2,00,000 × 1% = ₹2,000<br><br>
+Brick Size = ATR(14) ÷ 2<br>
+SL Distance = 2 × Brick Size = ATR(14)<br><br>
+<span class="g">Quantity</span> = ₹2,000 ÷ SL Distance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= ₹2,000 ÷ (Entry − Stop Loss Price)<br><br>
+Position Value = Quantity × Entry Price<br>
+<span class="dim">// If &gt; ₹40,000 → cap quantity to ₹40,000 ÷ Entry</span><br><br>
+<span class="r">NEVER override the 1% rule.</span><br>
+<span class="dim">// Place SL-M order in Zerodha before you leave screen</span>
+      </div>
+      <div>
+        <div class="rr"><span class="rr-l">Total Capital</span><span class="rr-v">₹2,00,000</span></div>
+        <div class="rr"><span class="rr-l">Max Risk per Trade (1%)</span><span class="rr-v" style="color:var(--ruby)">₹2,000</span></div>
+        <div class="rr"><span class="rr-l">Max 3 Open Trades combined</span><span class="rr-v" style="color:var(--gold)">₹6,000</span></div>
+        <div class="rr"><span class="rr-l">Daily Loss Limit — Stop Trading</span><span class="rr-v" style="color:var(--ruby)">₹4,000</span></div>
+        <div class="rr"><span class="rr-l">Monthly Drawdown — Review System</span><span class="rr-v" style="color:var(--ruby)">₹10,000</span></div>
+        <div class="rr"><span class="rr-l">Hard Position Cap per Trade</span><span class="rr-v">₹40,000</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-top-bar g"></div>
+      <div class="card-label">Live Position Calculator — Renko ATR/2</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="igroup" style="grid-column:span 2;"><label>Portfolio Capital ₹</label><input type="number" id="c-cap" value="200000" oninput="calc()"></div>
+        <div class="igroup"><label>Entry Price ₹</label><input type="number" id="c-ent" placeholder="e.g. 1620" oninput="calc()"></div>
+        <div class="igroup"><label>ATR(14) Value ₹</label><input type="number" id="c-atr" placeholder="e.g. 48" oninput="calc()"></div>
+        <div class="igroup"><label>Brick Size (ATR÷2) ₹</label><input type="number" id="c-brk" readonly placeholder="auto-calc" style="background:var(--void);color:var(--ink2);"></div>
+        <div class="igroup"><label>SL Bricks (default 2)</label><input type="number" id="c-slb" value="2" min="1" max="4" oninput="calc()"></div>
+        <div class="igroup"><label>Target Bricks (min 4)</label><input type="number" id="c-tgt" value="4" min="2" oninput="calc()"></div>
+        <div class="igroup"><label>Stock Name</label><input type="text" id="c-sym" value="HDFC Bank" oninput="calc()"></div>
+      </div>
+      <div id="c-result" class="res-panel" style="display:none;">
+        <div class="res-row"><span class="res-l">Brick Size</span><span class="res-v" style="color:var(--gold)" id="r-brk">—</span></div>
+        <div class="res-row"><span class="res-l">SL Distance</span><span class="res-v" style="color:var(--ruby)" id="r-sld">—</span></div>
+        <div class="res-row"><span class="res-l">Stop Loss Price</span><span class="res-v" style="color:var(--ruby)" id="r-slp">—</span></div>
+        <div class="res-row"><span class="res-l">Quantity</span><span class="res-v" style="color:var(--jade)" id="r-qty">—</span></div>
+        <div class="res-row"><span class="res-l">Actual Risk ₹</span><span class="res-v" style="color:var(--ruby)" id="r-rsk">—</span></div>
+        <div class="res-row"><span class="res-l">Position Value ₹</span><span class="res-v" id="r-pos">—</span></div>
+        <div class="res-row"><span class="res-l">Target Price</span><span class="res-v" style="color:var(--jade)" id="r-tgp">—</span></div>
+        <div class="res-row"><span class="res-l">R:R Ratio</span><span class="res-v" style="color:var(--gold)" id="r-rr">—</span></div>
+      </div>
+      <div id="c-verdict" class="verdict"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-top-bar b"></div>
+    <div class="card-label">Worked Examples — Major Nifty 50 Stocks</div>
+    <table class="tbl">
+      <tr><th>Stock</th><th>Price</th><th>ATR(14)</th><th>Brick=ATR/2</th><th>SL (2 bricks)</th><th>Qty (1% rule)</th><th>Capital Used</th><th>Target (4 bricks)</th><th>R:R</th><th>Status</th></tr>
+      <tr><td><strong>HDFC Bank</strong></td><td>₹1,620</td><td>₹48</td><td>₹24</td><td>₹1,572 (−₹48)</td><td>41 shares</td><td>₹39,825</td><td>₹1,716 (+₹96)</td><td style="color:var(--jade)">1:2.0</td><td><span class="tag g">Valid ✓</span></td></tr>
+      <tr><td><strong>Reliance</strong></td><td>₹2,890</td><td>₹82</td><td>₹41</td><td>₹2,808 (−₹82)</td><td>24 → cap 13</td><td>₹37,570</td><td>₹3,054 (+₹164)</td><td style="color:var(--jade)">1:2.0</td><td><span class="tag o">Capped</span></td></tr>
+      <tr><td><strong>ITC</strong></td><td>₹420</td><td>₹12</td><td>₹6</td><td>₹408 (−₹12)</td><td>95 shares</td><td>₹39,900</td><td>₹444 (+₹24)</td><td style="color:var(--jade)">1:2.0</td><td><span class="tag g">Valid ✓</span></td></tr>
+      <tr><td><strong>Infosys</strong></td><td>₹1,480</td><td>₹40</td><td>₹20</td><td>₹1,440 (−₹40)</td><td>50 → cap 27</td><td>₹39,960</td><td>₹1,560 (+₹80)</td><td style="color:var(--jade)">1:2.0</td><td><span class="tag o">Capped</span></td></tr>
+      <tr><td><strong>SBI</strong></td><td>₹780</td><td>₹22</td><td>₹11</td><td>₹758 (−₹22)</td><td>90 shares</td><td>₹39,780</td><td>₹824 (+₹44)</td><td style="color:var(--jade)">1:2.0</td><td><span class="tag g">Valid ✓</span></td></tr>
+    </table>
+    <div class="alert g" style="margin-top:12px;"><strong>Why the 20% Cap Exists</strong>When brick size is small relative to stock price (e.g., ITC), the 1% formula generates a very large quantity. The ₹40,000 cap ensures no single trade dominates the ₹2L portfolio regardless of formula output. Always apply the cap check after the formula.</div>
+  </div>
+</div>
+
+<!-- ═══════ PAGE 5: JOURNAL ═══════ -->
+<div id="journal" class="pg">
+  <div class="pg-eye">Section 05 — Trade Audit</div>
+  <div class="pg-title">System vs. Self — 10 Questions</div>
+  <div class="pg-sub">5 System Adherence · 5 Psychological Friction · Answer within 2 hours of every trade close</div>
+
+  <div class="kpi-bar">
+    <div class="kpi o"><div class="kpi-label">System Questions</div><div class="kpi-val">5</div><div class="kpi-note">Renko rule compliance</div></div>
+    <div class="kpi r"><div class="kpi-label">Psychology Questions</div><div class="kpi-val">5</div><div class="kpi-note">9-to-5 stress / bias</div></div>
+    <div class="kpi b"><div class="kpi-label">Fill Time</div><div class="kpi-val">10 min</div><div class="kpi-note">Minimum per trade</div></div>
+    <div class="kpi g"><div class="kpi-label">Pattern Threshold</div><div class="kpi-val">60%</div><div class="kpi-note">Identifies root cause</div></div>
+  </div>
+
+  <div class="g2" style="align-items:start;">
+    <div>
+      <div style="font-size:15px;font-weight:700;letter-spacing:-0.3px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--jade);display:flex;align-items:center;gap:10px;">
+        <span style="color:var(--jade);">SYSTEM ADHERENCE</span>
+        <span class="tag g">Renko Rule Compliance</span>
+      </div>
+
+      <div class="jq sys">
+        <div class="jn">01</div>
+        <div class="jb">
+          <div class="jt">Which of the 3 defined Renko setups does this trade match — exactly? Name it and describe the brick sequence that triggered entry.</div>
+          <div class="jw">If you cannot name the pattern and describe the exact brick count (e.g., "LL-HL: LL at 5 bricks down, HL held for 2 sessions, 2nd UP brick on HL break = entry"), you had a hunch, not a setup. A hunch on a ₹2L account produces the same outcome as 2022. This is the first and most important gate.</div>
+        </div>
+        <div class="jtag"><span class="tag g">System</span></div>
+      </div>
+
+      <div class="jq sys">
+        <div class="jn">02</div>
+        <div class="jb">
+          <div class="jt">Was the Nifty 50 Renko in an uptrend at entry? Did the index correlation filter pass before I entered?</div>
+          <div class="jw">Taking a long LL-HL setup while Nifty Renko is in a downtrend removes the single most powerful edge in the system — index tailwind. This filter is not optional. A win in this scenario is luck, not process, and it trains the wrong behavior for when it eventually fails catastrophically.</div>
+        </div>
+        <div class="jtag"><span class="tag g">System</span></div>
+      </div>
+
+      <div class="jq sys">
+        <div class="jn">03</div>
+        <div class="jb">
+          <div class="jt">What VSA signal confirmed entry? Write the exact ratio: today's volume ÷ 20-day average. Was it Demand Bar, No Supply, or high-volume breakout?</div>
+          <div class="jw">"Volume looked high" is not data. If the ratio is below 1.0 on an LL-HL breakout, no institutional participation confirmed the move. This number, tracked across 20+ trades, will statistically prove whether VSA filters actually improve your win rate — or whether you should adjust the confirmation threshold.</div>
+        </div>
+        <div class="jtag"><span class="tag g">System</span></div>
+      </div>
+
+      <div class="jq sys">
+        <div class="jn">04</div>
+        <div class="jb">
+          <div class="jt">Was the stop loss placed exactly 2 bricks below the HL (or entry level) and entered as a hard SL-M order in Zerodha before I closed the screen?</div>
+          <div class="jw">A stop loss that exists in your memory and not in Zerodha's order book is not a stop loss — it is a wish. For a 9-to-5 professional who cannot monitor the market, this question is non-negotiable. Binary: yes or no. There is no "I'll place it tomorrow morning."</div>
+        </div>
+        <div class="jtag"><span class="tag g">System</span></div>
+      </div>
+
+      <div class="jq sys">
+        <div class="jn">05</div>
+        <div class="jb">
+          <div class="jt">If this trade lost — looking back without result bias — was the LL-HL setup genuinely valid at entry? Or did I misread the brick count, the HL confirmation, or the VSA signal?</div>
+          <div class="jw">This separates a valid setup that lost (statistical noise — accept, don't adjust rules) from a misread signal (execution error — identify which check you skipped and fix it). Tracking across 30+ trades reveals the answer: if &gt;60% show "setup was valid," the system edge needs refinement. If &gt;60% show "I misread," the checklist execution needs reinforcement.</div>
+        </div>
+        <div class="jtag"><span class="tag g">System</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:15px;font-weight:700;letter-spacing:-0.3px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--ruby);display:flex;align-items:center;gap:10px;">
+        <span style="color:var(--ruby);">PSYCHOLOGICAL FRICTION</span>
+        <span class="tag r">9-to-5 Stress Audit</span>
+      </div>
+
+      <div class="jq psy">
+        <div class="jn">06</div>
+        <div class="jb">
+          <div class="jt">Was I carrying emotional weight from work — deadline pressure, frustration, a difficult interaction — at the time I analyzed and placed this trade?</div>
+          <div class="jw">Stress from your 9-to-5 is the most under-documented driver of retail trading losses for working professionals. Cortisol impairs the prefrontal cortex — the exact neural circuit needed to say "the HL hasn't been confirmed yet, I'll wait one more session." Name the emotional state. It is data, not weakness. Trades placed in this state are statistically less reliable even with valid signals.</div>
+        </div>
+        <div class="jtag"><span class="tag r">Self</span></div>
+      </div>
+
+      <div class="jq psy">
+        <div class="jn">07</div>
+        <div class="jb">
+          <div class="jt">Did I hesitate on a valid LL-HL signal because of memories of past losses? Or did I force an entry on a weak setup because I feared missing a move after watching bricks form without me?</div>
+          <div class="jw">Since 2022, every failed trade has left a memory trace that creates either paralysis (hesitation on valid setups) or overcompensation (FOMO entries on weak setups). These are opposite behavioral failures with the same financial outcome. Name which one showed up today — they have completely different corrective actions.</div>
+        </div>
+        <div class="jtag"><span class="tag r">Self</span></div>
+      </div>
+
+      <div class="jq psy">
+        <div class="jn">08</div>
+        <div class="jb">
+          <div class="jt">Did I check my open Renko positions on my phone during work hours after placing the entry? If yes — how many times, and what did I do with what I saw?</div>
+          <div class="jw">Renko ATR/2 on Daily charts is specifically designed to eliminate the need for intraday monitoring. Every mid-day phone check is a symptom of trust deficit in the system — and typically leads to premature exits at the 1st pullback brick, which is statistically the most common exit point before a trade achieves its 4-brick target. The GTT and SL-M orders are placed. There is nothing actionable between 10:00 AM and 3:20 PM.</div>
+        </div>
+        <div class="jtag"><span class="tag r">Self</span></div>
+      </div>
+
+      <div class="jq psy">
+        <div class="jn">09</div>
+        <div class="jb">
+          <div class="jt">Did I follow the written exit plan — SL hit = accept and move on, target hit = book, 2-brick reversal = exit — or did I improvise based on how I felt about the stock at that moment?</div>
+          <div class="jw">Your written exit plan was created by your calm, analytical self during the evening session. The in-trade decision is made by your stress-loaded, emotionally engaged self during market hours or a quick phone check. These are not the same decision-maker. Track which version is executing your trades. By Week 4 of journaling, the pattern will be unmistakable.</div>
+        </div>
+        <div class="jtag"><span class="tag r">Self</span></div>
+      </div>
+
+      <div class="jq psy">
+        <div class="jn">10</div>
+        <div class="jb">
+          <div class="jt">On a scale of 1–10: how well did I follow the Renko process this week — completely independent of P&amp;L? What is ONE specific Renko rule I commit to protecting next week?</div>
+          <div class="jw">The process score decouples self-evaluation from random market outcomes. A trader who scores 9/10 on process but has a losing week due to statistical variance is on the correct path. A trader who scores 3/10 on process but has a winning week is building toward a systematic blowup. After 30 trades: if 60%+ of losses show "Setup valid" in Q5, refine the system. If 60%+ show "FOMO" in Q7 or "checked phone" in Q8, the strategy is fine — the behavior is the problem.</div>
+        </div>
+        <div class="jtag"><span class="tag r">Self</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PAGE 6: WORKFLOW ═══════ -->
+<div id="workflow" class="pg">
+  <div class="pg-eye">Section 06 — Daily Execution</div>
+  <div class="pg-title">The 40-Minute EOD Routine</div>
+  <div class="pg-sub">3:20 PM Renko check · GTT + SL-M orders · Journal by 5:00 PM · Zero intraday monitoring</div>
+
+  <div class="g2 mb32">
+    <div class="card">
+      <div class="card-top-bar o"></div>
+      <div class="card-label">Evening Renko Workflow — Every Trading Day</div>
+      <div class="tl">
+        <div class="tl-item"><div class="tl-dot"></div><div class="tl-t">3:20 PM — 5 min</div><div class="tl-h">Renko Chart Check</div><div class="tl-b">Open Zerodha / TradingView. Check Nifty 50 Renko trend (up / down / sideways). Check India VIX — above 20 means halve all position sizes. This is your market context filter. Never skip this step.</div></div>
+        <div class="tl-item"><div class="tl-dot"></div><div class="tl-t">3:25 PM — 8 min</div><div class="tl-h">Open Trade Review</div><div class="tl-b">Did any position hit SL or target today? Has a 2-brick reversal formed against your open trades? Is the HL structure still intact? Trail SL to breakeven once 2R profit is achieved.</div></div>
+        <div class="tl-item"><div class="tl-dot" style="background:var(--gold);"></div><div class="tl-t">3:33 PM — 12 min</div><div class="tl-h">Watchlist Scan</div><div class="tl-b">Go through your 25-30 stock watchlist. For each: (1) New brick today? (2) LL-HL pattern match? (3) VSA on today's candle? (4) Index alignment? Score 4/4 = high priority. Score 3/4 = watchlist for tomorrow.</div></div>
+        <div class="tl-item"><div class="tl-dot" style="background:var(--gold);"></div><div class="tl-t">3:45 PM — 8 min</div><div class="tl-h">Position Sizing</div><div class="tl-b">For each candidate: ATR/2 brick size → SL distance → Quantity (1% rule) → Position value (20% cap check) → Target (4 bricks) → R:R ≥ 1:2 verified. Use the Tab 04 calculator.</div></div>
+        <div class="tl-item"><div class="tl-dot" style="background:var(--jade);"></div><div class="tl-t">3:53 PM — 5 min</div><div class="tl-h">Place GTT + SL-M Orders</div><div class="tl-b">Zerodha: GTT buy order at entry price → SL-M order at stop price. Both orders placed before 4:00 PM. You are done until tomorrow's 3:20 PM check. Do not touch the trades intraday.</div></div>
+        <div class="tl-item"><div class="tl-dot" style="background:var(--ink3);"></div><div class="tl-t">4:00 PM — 10 min</div><div class="tl-h">Journal Update</div><div class="tl-b">Answer all 10 audit questions for trades closed today. Pre-fill Q1–Q4 for tomorrow's planned entries. Rate process 1–10 (not P&L). Update monthly tracker. Note ATR values for all watchlist stocks.</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card mb20">
+        <div class="card-top-bar r"></div>
+        <div class="card-label">Five Non-Negotiable Rules</div>
+        <div class="nr-item">
+          <div class="nr-num">01</div>
+          <div class="nr-body"><strong>Recalculate ATR/2 brick size every Monday</strong><p>ATR changes week to week. A stale brick size generates wrong signals and wrong position sizes. Takes 2 minutes — no exceptions.</p></div>
+        </div>
+        <div class="nr-item">
+          <div class="nr-num">02</div>
+          <div class="nr-body"><strong>Never enter on the 1st UP brick — always wait for the 2nd</strong><p>The 1st brick is a hypothesis. The 2nd brick is confirmation. This single rule eliminates the majority of LL-HL false starts and whipsaws.</p></div>
+        </div>
+        <div class="nr-item">
+          <div class="nr-num">03</div>
+          <div class="nr-body"><strong>SL-M order must be in Zerodha before 4:00 PM</strong><p>No mental stops. No "I'll place it tomorrow morning." If the order is not in the system, the position is unprotected overnight — unacceptable for a 9-to-5 trader.</p></div>
+        </div>
+        <div class="nr-item">
+          <div class="nr-num">04</div>
+          <div class="nr-body"><strong>VIX above 20 = all position sizes halved</strong><p>High volatility makes ATR/2 bricks unreliable and increases whipsaw risk. Half size = half loss if wrong. This is not optional on VIX-elevated days.</p></div>
+        </div>
+        <div class="nr-item">
+          <div class="nr-num">05</div>
+          <div class="nr-body"><strong>Maximum 3 open trades at any time</strong><p>More than 3 means you cannot adequately review the Renko status of each during your 40-minute EOD window. 3 is both the cognitive limit and the capital management limit.</p></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-top-bar g"></div>
+        <div class="card-label">Why ATR/2 Renko Is Built For Your Life</div>
+        <table class="tbl">
+          <tr><th>Candlestick Day Trading Problem</th><th>Renko ATR/2 Solution</th></tr>
+          <tr><td>Need to watch screen constantly</td><td>Bricks only form at EOD close — nothing changes during office hours</td></tr>
+          <tr><td>Panic from intraday candle wicks</td><td>Renko strips time and wicks — only committed, sustained moves build bricks</td></tr>
+          <tr><td>Subjective stop placement</td><td>Stop = exactly 2 bricks from entry — mathematical, never emotional</td></tr>
+          <tr><td>Overtrading in sideways markets</td><td>No new bricks = no signal = forced patience = no overtrading</td></tr>
+          <tr><td>FOMO on fast-moving stocks</td><td>LL-HL setup requires structural confirmation — prevents impulse entries</td></tr>
+          <tr><td>Trailing stop subjectivity</td><td>Trail SL by 1 brick at a time as new UP bricks form — objective rule</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── NAVIGATION ───
+function showPg(id,el){
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('on');});
+  document.getElementById(id).classList.add('on');
+  el.classList.add('on');
+}
+
+// ─── ATR CALC ───
+function calcAtr(){
+  var atr=parseFloat(document.getElementById('a-atr').value)||0;
+  var entry=parseFloat(document.getElementById('a-entry').value)||0;
+  if(!atr) return;
+  var brick=atr/2;
+  var sl=brick*2;
+  var qty=entry?Math.min(Math.floor(2000/sl),Math.floor(40000/entry)):Math.floor(2000/sl);
+  document.getElementById('a-brick').textContent='₹'+brick.toFixed(2);
+  document.getElementById('a-sl').textContent='₹'+sl.toFixed(2);
+  document.getElementById('a-qty').textContent=qty+' shares';
+}
+calcAtr();
+
+// ─── POSITION CALC ───
+function calc(){
+  var cap=parseFloat(document.getElementById('c-cap').value)||200000;
+  var ent=parseFloat(document.getElementById('c-ent').value)||0;
+  var atr=parseFloat(document.getElementById('c-atr').value)||0;
+  var slb=parseFloat(document.getElementById('c-slb').value)||2;
+  var tgt=parseFloat(document.getElementById('c-tgt').value)||4;
+  if(!ent||!atr) return;
+  var brick=atr/2;
+  var sld=brick*slb;
+  var tgtd=brick*tgt;
+  var maxRisk=cap*0.01;
+  var rawQty=Math.floor(maxRisk/sld);
+  var capQty=Math.floor((cap*0.2)/ent);
+  var qty=Math.min(rawQty,capQty);
+  if(qty<1) qty=1;
+  var slp=ent-sld;
+  var tgp=ent+tgtd;
+  var posVal=qty*ent;
+  var actRisk=qty*sld;
+  var rr=tgtd/sld;
+  document.getElementById('c-brk').value=brick.toFixed(2);
+  document.getElementById('r-brk').textContent='₹'+brick.toFixed(2);
+  document.getElementById('r-sld').textContent='₹'+sld.toFixed(2)+' ('+slb+' bricks)';
+  document.getElementById('r-slp').textContent='₹'+slp.toFixed(2);
+  document.getElementById('r-qty').textContent=qty+' shares'+(rawQty>capQty?' [capped]':'');
+  document.getElementById('r-rsk').textContent='₹'+Math.round(actRisk).toLocaleString('en-IN');
+  document.getElementById('r-pos').textContent='₹'+Math.round(posVal).toLocaleString('en-IN');
+  document.getElementById('r-tgp').textContent='₹'+tgp.toFixed(2);
+  document.getElementById('r-rr').textContent='1 : '+rr.toFixed(1);
+  var vd=document.getElementById('c-verdict');
+  vd.style.display='block';
+  if(rr>=2){
+    vd.style.cssText='display:block;background:rgba(16,185,129,.1);color:#34d399;margin-top:10px;padding:10px 14px;border-radius:4px;font-family:var(--mono);font-size:11px;letter-spacing:.5px;';
+    vd.textContent='✓ VALID — R:R meets 1:2 minimum. Proceed.'+(rawQty>capQty?' [Qty capped at 20% rule]':'');
+  } else if(rr>=1.5){
+    vd.style.cssText='display:block;background:rgba(245,166,35,.1);color:#fbbf24;margin-top:10px;padding:10px 14px;border-radius:4px;font-family:var(--mono);font-size:11px;letter-spacing:.5px;';
+    vd.textContent='⚠ BORDERLINE — R:R below 1:2. High-conviction setups only.';
+  } else {
+    vd.style.cssText='display:block;background:rgba(239,68,68,.1);color:#f87171;margin-top:10px;padding:10px 14px;border-radius:4px;font-family:var(--mono);font-size:11px;letter-spacing:.5px;';
+    vd.textContent='✗ REJECTED — R:R below 1:1.5. Widen target or skip trade.';
+  }
+  document.getElementById('c-result').style.display='block';
+}
+
+// ─── SCREENER DATA ───
+var stocks=[
+  {name:'HDFC Bank',ltp:1620,atr:48,pat:'LL-HL Confirmed',trend:'↑↑↑ Strong Up',score:5,vsa:'Demand Bar',type:'llhl'},
+  {name:'Reliance',ltp:2890,atr:82,pat:'W-Pattern Forming',trend:'↑↑ Up',score:4,vsa:'No Supply',type:'llhl'},
+  {name:'ICICI Bank',ltp:1240,atr:36,pat:'LL-HL Confirmed',trend:'↑↑ Up',score:5,vsa:'Stopping Vol',type:'llhl'},
+  {name:'TCS',ltp:3720,atr:96,pat:'Pullback HL',trend:'↑↑ Up',score:4,vsa:'Low Vol',type:'pull'},
+  {name:'Infosys',ltp:1480,atr:40,pat:'S/R Flip',trend:'↑ Forming',score:4,vsa:'High Vol Break',type:'brk'},
+  {name:'Kotak Bank',ltp:1780,atr:52,pat:'Accumulation',trend:'↑↑↑ Strong Up',score:5,vsa:'Rising Vol',type:'accum'},
+  {name:'SBI',ltp:780,atr:22,pat:'W-Pattern Forming',trend:'↑ Forming',score:4,vsa:'No Supply',type:'llhl'},
+  {name:'Titan',ltp:3120,atr:88,pat:'LL-HL Confirmed',trend:'↑↑ Up',score:5,vsa:'Demand Bar',type:'llhl'},
+  {name:'Maruti',ltp:11200,atr:320,pat:'Pullback HL',trend:'↑↑ Up',score:4,vsa:'Low Vol Pullback',type:'pull'},
+  {name:'L&T',ltp:3450,atr:94,pat:'Accumulation',trend:'↑↑↑ Strong Up',score:5,vsa:'Rising Vol',type:'accum'},
+  {name:'Bajaj Finance',ltp:6820,atr:186,pat:'S/R Flip',trend:'↑ Forming',score:3,vsa:'Moderate Vol',type:'brk'},
+  {name:'Asian Paints',ltp:2680,atr:68,pat:'S/R Flip',trend:'↑ Forming',score:3,vsa:'No Demand',type:'brk'},
+];
+var wpStocks=[
+  {name:'ICICI Bank',ltp:1240,atr:36,score:7,status:'Neckline break imminent — HL at ₹1,210 held for 3 sessions. Entry on next 2-brick UP move.',bricks:['d','d','d','u','u','d','d','u','u','u']},
+  {name:'HDFC Bank',ltp:1620,atr:48,score:6,status:'LL-HL confirmed. 2nd bottom above 1st. Watching for 2-brick breakout above neckline at ₹1,640.',bricks:['d','d','u','u','d','u','u','u','d','u']},
+  {name:'Titan',ltp:3120,atr:88,score:6,status:'Classic W visible. Neckline at ₹3,180. Entry = close above neckline with volume spike.',bricks:['d','u','d','u','d','d','u','u','u','u']},
+  {name:'SBI',ltp:780,atr:22,score:5,status:'LL-HL structure forming. Nifty Renko in uptrend — correlation aligned. Watching HL hold.',bricks:['d','d','u','d','u','u','d','u','u','u']},
+];
+var curFlt='all',curSrch='';
+function flt(t,el){curFlt=t;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});el.classList.add('on');renderScr();}
+function srch(v){curSrch=v;renderScr();}
+function renderScr(){
+  var body=document.getElementById('scr-body');body.innerHTML='';
+  var flt=stocks.filter(function(s){
+    var mt=curFlt==='all'||s.type===curFlt;
+    var ms=!curSrch||s.name.toLowerCase().includes(curSrch.toLowerCase());
+    return mt&&ms;
+  });
+  flt.forEach(function(s){
+    var tc=s.score>=5?'var(--jade)':s.score>=4?'var(--gold)':'var(--ruby)';
+    var pt=s.type==='llhl'?'g':s.type==='accum'?'g':s.type==='pull'?'o':'b';
+    body.innerHTML+='<div class="scr-row">'+
+      '<div style="font-weight:600;">'+s.name+'</div>'+
+      '<div style="font-family:var(--mono);font-size:12px;">₹'+s.ltp.toLocaleString('en-IN')+'</div>'+
+      '<div style="font-family:var(--mono);font-size:11px;color:var(--ink3);">₹'+(s.atr/2).toFixed(0)+'</div>'+
+      '<div><span class="tag '+pt+'">'+s.pat+'</span></div>'+
+      '<div style="font-size:11px;font-weight:600;color:'+tc+'">'+s.trend+'</div>'+
+      '<div style="font-family:var(--mono);font-size:17px;font-weight:700;color:'+tc+'">'+s.score+'/5</div>'+
+      '<div style="font-size:11px;color:var(--ink2);">'+s.vsa+'</div>'+
+    '</div>';
+  });
+}
+function renderWP(){
+  var list=document.getElementById('wp-list');list.innerHTML='';
+  wpStocks.forEach(function(w){
+    var sc=w.score>=6?'var(--jade)':w.score>=5?'var(--gold)':'var(--ruby)';
+    var bhtml=w.bricks.map(function(b,i){
+      var h=16+(i%3===0?8:0)+(b==='u'?10:0);
+      var bg=b==='u'?'linear-gradient(180deg,#34d399,#10b981)':'linear-gradient(180deg,#f87171,#ef4444)';
+      return '<div class="wm-b" style="height:'+h+'px;background:'+bg+';"></div>';
+    }).join('');
+    list.innerHTML+='<div class="wp-card">'+
+      '<div class="wp-mini">'+bhtml+'</div>'+
+      '<div class="wp-info">'+
+        '<div class="wp-name">'+w.name+' <span class="tag g" style="font-size:8px;">LL-HL / W</span></div>'+
+        '<div class="wp-meta">LTP ₹'+w.ltp.toLocaleString('en-IN')+' · Brick ₹'+(w.atr/2).toFixed(0)+' · SL ₹'+(w.ltp-w.atr).toFixed(0)+'</div>'+
+        '<div class="wp-status">'+w.status+'</div>'+
+      '</div>'+
+      '<div class="wp-sc"><div class="wp-sc-v" style="color:'+sc+'">'+w.score+'/7</div><div class="wp-sc-l">Conviction</div></div>'+
+    '</div>';
+  });
+}
+renderScr();
+renderWP();
+</script>
+</body>
+</html>
